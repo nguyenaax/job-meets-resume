@@ -1,0 +1,6 @@
+# What the engineering/ excerpts import. The private pipeline additionally uses
+# playwright, ddgs, python-dotenv and google-auth.
+beautifulsoup4==4.15.0
+pydantic==2.13.4
+requests==2.34.2
+google-genai==2.8.0

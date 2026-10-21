@@ -1,0 +1,9 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Secrets and local state (none ship with this showcase)
+.env
+*.db
+credentials/
