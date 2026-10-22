@@ -1,6 +1,8 @@
-# jobsieve
+# JobMeetsResume
 
-A personal job-discovery pipeline that treats postings the way a vulnerability-intelligence team treats CVEs: collect from every source, gate deterministically, score with a model only what survives, and keep one record per posting with a status that drives the next decision.
+A personal job-discovery pipeline that scores job postings against one resume. It ranks postings and never edits the resume. The name is a play on dating apps: most postings are turned down by deterministic gates before they ever meet the model.
+
+It treats postings the way a vulnerability-intelligence team treats CVEs: collect from every source, gate deterministically, score with a model only what survives, and keep one record per posting with a status that drives the next decision.
 
 **This repository is a showcase, not the source.** It documents the architecture and the engineering behind a system I run daily, and includes the infrastructure modules that stand on their own. The evaluation prompt, the candidate profile it scores against, the target list and the data are private. I designed the pipeline and directed AI coding tools to build and debug much of it, and I am happy to discuss the architecture and the engineering decisions behind it.
 
