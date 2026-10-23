@@ -10,14 +10,15 @@ It treats postings the way a vulnerability-intelligence team treats CVEs: collec
 
 ```mermaid
 flowchart TD
-  subgraph DISCOVER["Discovery, six sources, each isolated so one failure does not stop the run"]
+  subgraph DISCOVER["Discovery, seven sources, each isolated so one failure does not stop the run"]
     S1["Public ATS JSON APIs for a target list:
 Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable, Recruitee"]
     S2["Headless browser, only for Workday boards the API could not serve"]
-    S3["Search-engine dorks for companies not on the target list"]
+    S3["Search-engine dorks for companies not on the target list, kept only when the URL is a single posting"]
     S4["Curated security-jobs feed"]
     S5["Remote-job feeds that carry descriptions inline"]
     S6["A pre-matched spreadsheet import that skips the model"]
+    S7["Federal job search API, keyed, queried by occupational series and metro radius"]
   end
   DISCOVER --> N["URL normalize and dedupe, in-run and against the database"]
   N --> G0["Deterministic gates, zero model cost:
@@ -26,8 +27,8 @@ company ignore list, two title blocklists, hold on companies with an application
   F --> PG["Posting integrity gate:
 hidden HTML and invisible characters removed, instruction-shaped lines flagged"]
   PG --> LLM["Model evaluation against the candidate profile, JSON-mode with a Pydantic schema"]
-  LLM --> POST["Post-model safety nets in code: commute check, salary floor, forced score on disqualifiers"]
-  POST --> DB[(SQLite, one row per posting, status defaults to NEW)]
+  LLM --> POST["Post-model safety nets in code: commute check, active-clearance check, salary floor, forced score on disqualifiers"]
+  POST --> DB[(SQLite, one row per posting tagged with its source, status defaults to NEW)]
   DB --> UI["Local dashboard: status state machine, auto-pass cascade, notes, ingest-by-URL"]
 ```
 
@@ -35,7 +36,7 @@ The ordering is the point. Everything cheap and deterministic runs before anythi
 
 ## What it has done
 
-- Over 8,000 postings processed since June 2026 across the six sources.
+- Over 8,000 postings processed since June 2026.
 - 64 percent of those were decided by the deterministic gates (the row's stored reason says which gate) and never reached a model call.
 - Roughly one to two cents per model evaluation on a Flash-class model, with a stable 12,000-token prefix the provider caches.
 - Runs need no supervision once started: a stopped run resumes where it ended, because every row is committed as it is scored.
@@ -46,7 +47,9 @@ The ordering is the point. Everything cheap and deterministic runs before anythi
 
 **A posting is untrusted input.** Anyone who controls a careers page can write text for the evaluator rather than for a reader. [`engineering/posting_guard.py`](engineering/posting_guard.py) strips hidden elements and invisible characters before any model sees the text, and flags instruction-shaped lines, invisible characters inside words and mixed-script words. Flagged postings are still scored, on the cleaned text, with a stamp the dashboard shows. A live sweep of 210 real postings produced zero false flags after one pattern was tightened. Design notes in [`docs/integrity-gate.md`](docs/integrity-gate.md).
 
-**Structured output, then code.** The model answers a Pydantic schema, never prose ([`engineering/schema.py`](engineering/schema.py)). Gaps are typed by time-to-close rather than subject. Salary estimates are display-only and can never trip the salary gate. The commute and salary rules are re-applied in code after the model answers, because a model that extracted the right location and then forgot to set the flag was a real failure. See [`docs/evaluation.md`](docs/evaluation.md).
+**Structured output, then code.** The model answers a Pydantic schema, never prose ([`engineering/schema.py`](engineering/schema.py)). Gaps are typed by time-to-close rather than subject. Salary estimates are display-only and can never trip the salary gate. The commute and salary rules are re-applied in code after the model answers, because a model that extracted the right location and then forgot to set the flag was a real failure. A clearance the applicant must already hold is its own boolean beside the free-text clearance field, so the check in code reads a flag rather than parsing prose. See [`docs/evaluation.md`](docs/evaluation.md).
+
+**Every row records its source.** The discovery phase that found a posting is stored with it, so a source earns its place by what it produced (rows, high scores, applications, interviews) rather than by how many postings it returns.
 
 **One application per company, enforced on both surfaces.** A single token-prefix company matcher ([`engineering/company_match.py`](engineering/company_match.py)) serves the pipeline's hold gate and the dashboard's cascade, so "Acme" matches "Acme Ltd" everywhere and "Nova" never matches "Supernova" anywhere.
 

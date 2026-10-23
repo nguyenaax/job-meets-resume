@@ -6,13 +6,15 @@ has the same shape. The field descriptions are the only prompt the schema carrie
 evaluation rubric itself (gates, scoring bands, candidate constraints) lives in a
 withheld prompt builder. Candidate-specific wording has been generalized here.
 
-Two design points worth noticing:
+Three design points worth noticing:
 
   * Gaps are typed by how long they take to close, not by subject. That is what lets a
     deterministic post-processing step treat a "just in time" gap and a "significant
     training" gap differently, and what makes the dashboard's gap lists useful.
   * Salary estimates are display-only and flagged. A guessed number can never trip the
     salary gate; only a salary the posting states can.
+  * A disqualifier the code acts on is a boolean, not a phrase to parse. The clearance
+    text is kept for the reader; the check in code reads active_clearance_required.
 """
 
 from typing import Optional
@@ -76,6 +78,11 @@ class JobEvaluation(BaseModel):
         default=False,
         description="True only when the estimate fields were filled. Never affects match_score.")
     clearance_required: str = Field(description="Security clearance required, or 'None'.")
+    active_clearance_required: bool = Field(
+        default=False,
+        description="True only when the applicant must already hold an active or current "
+                    "clearance to apply or start. False when it can be obtained after hire, "
+                    "is only preferred, or is absent. A True value is a dealbreaker in code.")
     tech_stack: str = Field(description="Comma-separated primary tools and languages, or 'None'.")
     skill_gaps: SkillGaps
 

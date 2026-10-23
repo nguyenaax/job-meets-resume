@@ -6,11 +6,11 @@ One Python process, one SQLite file, one local dashboard. No queue, no cloud, no
 
 | Component | Role |
 |---|---|
-| Scraper (`job_search.py`, private) | Discovery, gating, fetching, evaluation, persistence. About 2,200 lines. |
+| Scraper (`job_search.py`, private) | Discovery, gating, fetching, evaluation, persistence. About 2,500 lines. |
 | Posting guard (`posting_guard.py`, published) | Integrity gate between fetch and model. |
 | Company matcher (`company_match.py`, published) | One shared definition of "same company". |
 | Dashboard (`dashboard_server.py` and `dashboard.html`, private) | Local HTTP server on the standard library, one HTML file, the status state machine, notes, ingest by URL. |
-| Configuration | A target list (company, ATS, slug, URL, optional per-target search terms and budgets), a `.env` with the model API key, a candidate profile the prompt reads. |
+| Configuration | A target list (company, ATS, slug, URL, optional per-target search terms and budgets), a `.env` with the API keys, a candidate profile the prompt reads. |
 
 ## A run, phase by phase
 
@@ -20,9 +20,11 @@ One Python process, one SQLite file, one local dashboard. No queue, no cloud, no
 
 **Phase 2, headless browser.** Only for Workday targets the API could not serve this run. A target served by the API is never scraped a second way.
 
-**Phase 3, search dorks.** Search-engine queries against public ATS domains and job sites for technical keywords, the catch-all for companies not on the target list.
+**Phase 3, search dorks.** Search-engine queries against public ATS domains and job sites for technical keywords, the catch-all for companies not on the target list. A hit is kept only when its URL matches the single-posting pattern for that site, so board index pages and other non-posting links are dropped before they cost anything. The title and company are parsed from each site's own result-title format.
 
 **Phases 4 and 5, feeds.** A curated security-jobs feed and two remote-job feeds that carry the description in the feed payload.
+
+**Phase 6, federal postings.** The federal government's job search API, which needs a free key. It asks only for postings open to the public, in a short list of occupational series codes, and searches each term twice: once within a radius of the commute area and once for remote work. The description is assembled from the API's structured fields, and the application closing date is kept as the posting's deadline. A run without the key prints one skip line and moves on.
 
 **Normalize and dedupe.** Tracking parameters and fragments are stripped; a posting seen in this run or already in the database is dropped.
 
@@ -34,9 +36,9 @@ One Python process, one SQLite file, one local dashboard. No queue, no cloud, no
 
 **Evaluation.** One model call per posting, JSON mode, Pydantic schema, a fallback chain of models. See `evaluation.md`.
 
-**Post-model checks in code.** A disqualifying location forces the score to 1. A commute keyword check on the extracted location catches the case where the model extracted the right place and did not set the flag. A salary floor applies only when the posting states a salary; an estimate never disqualifies.
+**Post-model checks in code.** A disqualifying location forces the score to 1. A commute keyword check on the extracted location catches the case where the model extracted the right place and did not set the flag. A posting the model flagged as requiring a clearance the applicant must already hold is logged as a dealbreaker with a score of 1; a clearance the employer will sponsor after hire passes. A salary floor applies only when the posting states a salary; an estimate never disqualifies.
 
-**Persist.** One row per URL. Status defaults to NEW. Rows are committed as they are scored.
+**Persist.** One row per URL, tagged with the discovery phase that found it, so a report can rank sources by rows, high scores, applications and interviews. Status defaults to NEW. Rows are committed as they are scored.
 
 ## Manual ingest
 

@@ -26,14 +26,16 @@ The prompt is private, but its shape is ordinary and worth stating.
 - **Verdict labels are a closed set**, and two of them were split after use showed they were different findings: "Overqualified" (the role is on the candidate's track but scoped below them) and "Misaligned" (the daily work is a different discipline). Track decides whether to pursue; level only decides how to frame it.
 - **Gaps are typed by time**, which is what makes them actionable downstream.
 - **Estimates are quarantined.** `salary_is_estimated` is a separate flag, and the salary gate in code reads only stated values.
+- **Disqualifiers are booleans.** `clearance_required` stays free text for the reader, and `active_clearance_required` is a separate flag for the one case that disqualifies: a clearance the applicant must already hold. A clearance the employer sponsors after hire, or one a posting only prefers, leaves the flag false. Code gates on the flag and never parses the text.
 - **Context fields never score.** Company stage is recorded for the reader and the prompt says so.
 
 ## After the model
 
-Code checks three things the model might have gotten wrong:
+Code checks four things the model might have gotten wrong:
 
 - If the model set the disqualifying-location flag, the score is forced to 1 regardless of what it wrote.
 - If it did not, a keyword check on the extracted location catches the extracted-but-unflagged case. This was added after real rows scored well against an onsite posting in the wrong city.
+- If the model set the active-clearance flag, the row is logged as a dealbreaker with a score of 1, whatever fit score it gave the work itself.
 - If the posting states a maximum salary below the floor, the row is logged as salary-disqualified. Estimates never reach this check.
 
 ## Model selection
