@@ -32,6 +32,30 @@ hidden HTML and invisible characters removed, instruction-shaped lines flagged"]
 
 The ordering is the point. Everything cheap and deterministic runs before anything expensive and probabilistic, and the model's answer is checked by code before it is written down.
 
+## How it runs
+
+The system has two halves. The pipeline runs unattended from the command line and fills the database. The chat side runs in Claude Code, one posting at a time, once a posting looks worth a closer read.
+
+**Pipeline commands**
+
+| Command | What it does |
+|---|---|
+| `job_search.py run` | One full pass: discovery from every source, the gates, the integrity check, model scoring and the database write. A stopped run resumes where it ended. |
+| `job_search.py run --dry-run` | Discovery only, for testing a new source or query: no model calls and no database writes. |
+| `job_search.py ingest <url>` | Scores one posting found by hand. It skips the ignore list and the title blocklists, since a person already chose the posting, and only warns when an application at that company is in flight. `--force` re-scores an existing row, and `--remote` or `--location` record a location the operator has checked in place of the geo check. |
+| `job_search.py sources` | Reports rows, high scores, applications and interviews for each discovery source. |
+| `dashboard_server.py` | Serves the local triage dashboard shown below. |
+
+**Chat-side skills**
+
+| Step | What it does | What it never does |
+|---|---|---|
+| Evaluate a pasted posting | Classifies the role, matches its requirements against the master resume, lists gaps and missing keywords, checks commute and pay, and returns one fit verdict. | Present an estimate as fact: a salary the posting does not state is labeled as an estimate. |
+| `/decode` | Expands each responsibility into the day-to-day work it implies, then ranks them from strongest to weakest match, so an interview can be steered toward the strong ones. | Describe the candidate's experience in the posting's vocabulary instead of the resume's own. |
+| `/tailor` | Writes a separate tailored resume from the master resume alone, starting on its own when the verdict is strong enough, and lists every change for the candidate to veto. Each bullet keeps a provenance entry: the exact master-resume quote behind it and one sentence to defend it in an interview. | Edit the master or default resume, invent experience, inflate depth, swap the resume's terms for the posting's, or keep a keyword the master resume cannot support. Unsupported keywords are listed as rejected instead. |
+| `/job-picture` | Draws the role as one diagram from the posting alone: inputs on the left, the posting's responsibilities as numbered zones, consumers on the right, and the points where the hire makes decisions. | Read a resume, or present the diagram as knowledge of the team's real system. |
+| `/mock`, `/cover`, `/review` | Runs mock interview rounds, drafts a cover letter, and checks a draft for repetition and formatting. | Put salary or home location into anything an employer will read. |
+
 ## The triage dashboard (demo data)
 
 > [!NOTE]
@@ -58,7 +82,7 @@ The top posting carries the Guard tag: its page hid an instruction addressed to 
 
 **Gates before models.** A posting from a company on the ignore list, with a non-technical title, or at a company with an application already in flight is decided in microseconds and logged so it is never fetched again. The hold is the subtle one: it skips without logging, so those postings come back on their own when the application concludes. See [`docs/status-model.md`](docs/status-model.md).
 
-**A posting is untrusted input.** Anyone who controls a careers page can write text for the evaluator rather than for a reader. [`engineering/posting_guard.py`](engineering/posting_guard.py) strips hidden elements and invisible characters before any model sees the text, and flags instruction-shaped lines, invisible characters inside words and mixed-script words. Flagged postings are still scored, on the cleaned text, with a stamp the dashboard shows. A live sweep of 210 real postings produced zero false flags after one pattern was tightened. Design notes in [`docs/integrity-gate.md`](docs/integrity-gate.md).
+**A posting is untrusted input.** Anyone who controls a careers page can write text for the evaluator rather than for a reader. [`engineering/posting_guard.py`](engineering/posting_guard.py) strips hidden elements and invisible characters before any model sees the text, and flags instruction-shaped lines, invisible characters inside words and mixed-script words. Flagged postings are still scored, on the cleaned text, with a stamp the dashboard shows. A live sweep of 210 real postings produced zero false flags after one pattern was tightened. The module is adapted from `tools/posting_guard.py` in [ai-job-search](https://github.com/ai-job-search-dev/ai-job-search) (MIT) and rewritten for a pipeline that only scores postings, with retuned patterns. Design notes in [`docs/integrity-gate.md`](docs/integrity-gate.md).
 
 **Structured output, then code.** The model answers a Pydantic schema, never prose ([`engineering/schema.py`](engineering/schema.py)). Gaps are typed by time-to-close rather than subject. Salary estimates are display-only and can never trip the salary gate. The commute and salary rules are re-applied in code after the model answers, because a model that extracted the right location and then forgot to set the flag was a real failure. A clearance the applicant must already hold is its own boolean beside the free-text clearance field, so the check in code reads a flag rather than parsing prose. See [`docs/evaluation.md`](docs/evaluation.md).
 
@@ -80,12 +104,13 @@ The top posting carries the Guard tag: its page hid an instruction addressed to 
 | The candidate profile, upskilling plan and target company list | Personal |
 | The database, dashboard code and application history | Personal; outcomes are not a benchmark of the pipeline |
 | Gate lists: ignored companies, title blocklists, commute keywords, salary floor | Encode one person's search |
-| Resume tooling that sits beside the pipeline | Personal documents |
+| The chat-side skill instructions, and the resumes and analyses they produce | The instructions encode the judgment; the outputs are personal documents |
 
 ## Repository layout
 
 ```
 README.md
+THIRD_PARTY_NOTICES.md the MIT notice for the adapted posting guard
 docs/
   architecture.md      components, phases, data flow, the cost model
   evaluation.md        how scoring works and what code checks after the model
@@ -103,6 +128,10 @@ engineering/
 
 The private pipeline runs on Python 3.14 with Playwright, BeautifulSoup, Pydantic and the Gemini API. The excerpts here need only what `requirements.txt` lists.
 
+## Acknowledgements
+
+- `engineering/posting_guard.py` is adapted from `tools/posting_guard.py` in [ai-job-search](https://github.com/ai-job-search-dev/ai-job-search) by Mads Lorentzen, under the MIT License. Its notice is in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
 ## License
 
-MIT. The excerpts are free to reuse. The names of ATS vendors and model providers are theirs.
+MIT. The excerpts are free to reuse. The names of ATS vendors and model providers are theirs. The adapted posting guard also carries its original MIT notice; see Acknowledgements.

@@ -2,6 +2,8 @@
 
 `engineering/posting_guard.py` is the deterministic layer between the fetch and the model. The evaluation prompt also tells the model to treat the posting as data rather than instructions, but a paragraph only works as well as the model obeys it on one particular call. The guard makes the removal mechanical.
 
+The module is adapted from `tools/posting_guard.py` in [ai-job-search](https://github.com/ai-job-search-dev/ai-job-search) (MIT; the notice is in [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md)) and rewritten for a pipeline that only scores postings.
+
 ## Where it runs
 
 At every point HTML becomes text: the ATS detail fetchers, the inline-description feeds, and both paths of the browser fetch (the JSON-LD description and the rendered page). Always before the 8,000-character truncation, so hidden text at the end of a long page is still seen. The verdict is applied once, after fetch and before the model.

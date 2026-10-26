@@ -1,5 +1,10 @@
 """Posting integrity gate: clean a fetched job posting and say what was found.
 
+Adapted from tools/posting_guard.py in ai-job-search
+(https://github.com/ai-job-search-dev/ai-job-search), Copyright (c) 2026 Mads Lorentzen,
+MIT License; the full notice is in THIRD_PARTY_NOTICES.md. Rewritten for a pipeline that
+only scores postings, with retuned patterns.
+
 Every job description the scraper feeds to Gemini is text that somebody else controls.
 The evaluation prompt already tells the model to treat the posting as data, but that
 rule is only as strong as the model's adherence to it on one particular call. This
