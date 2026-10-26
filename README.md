@@ -1,8 +1,18 @@
 # job-meets-resume
 
+![Python 3.14](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white) ![License: MIT](https://img.shields.io/badge/License-MIT-2ea44f) ![Showcase: source private](https://img.shields.io/badge/Showcase-source%20private-6e7781)
+
 A personal job-discovery pipeline that scores job postings against one resume. It ranks postings and never edits the resume. The name is a play on dating apps: most postings are turned down by deterministic gates before they ever meet the model.
 
+![Demo data: the triage dashboard listing fictional analyst postings by score, the top one carrying the Guard tag](docs/images/dashboard-hero.png)
+
+*Demo data: the triage dashboard running on fictional postings. Every company, posting, score and status in the screenshots on this page is fictional; see [The triage dashboard](#the-triage-dashboard-demo-data).*
+
 **This repository is a showcase, not the source.** It documents the architecture and the engineering behind a system I run daily, and includes the infrastructure modules that stand on their own. The evaluation prompt, the candidate profile it scores against, the target list and the data are private. I designed the pipeline and directed AI coding tools to build and debug much of it, and I am happy to discuss the architecture and the engineering decisions behind it.
+
+| 8,000+ | 64% | 1 to 2 cents |
+|:---:|:---:|:---:|
+| postings processed since June 2026 | decided by deterministic gates, never reaching a model call | per model evaluation on a Flash-class model, with a cached 12,000-token prefix |
 
 ## Pipeline at a glance
 
@@ -10,25 +20,60 @@ A personal job-discovery pipeline that scores job postings against one resume. I
 flowchart TD
   subgraph DISCOVER["Discovery, seven sources, each isolated so one failure does not stop the run"]
     S1["Public ATS JSON APIs for a target list:
-Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable, Recruitee"]
-    S2["Headless browser, only for Workday boards the API could not serve"]
-    S3["Search-engine dorks for companies not on the target list, kept only when the URL is a single posting"]
+Greenhouse, Lever, Ashby, Workday,
+SmartRecruiters, Workable, Recruitee"]
+    S2["Headless browser, only for Workday
+boards the API could not serve"]
+    S3["Search-engine dorks for companies
+not on the target list, kept only
+when the URL is a single posting"]
     S4["Curated security-jobs feed"]
-    S5["Remote-job feeds that carry descriptions inline"]
-    S6["A pre-matched spreadsheet import that skips the model"]
-    S7["Federal job search API, keyed, queried by occupational series and metro radius"]
+    S5["Remote-job feeds that carry
+descriptions inline"]
+    S6["A pre-matched spreadsheet import
+that skips the model"]
+    S7["Federal job search API, keyed,
+queried by occupational series
+and metro radius"]
+    S1 ~~~ S2 ~~~ S3 ~~~ S4
+    S5 ~~~ S6 ~~~ S7
   end
-  DISCOVER --> N["URL normalize and dedupe, in-run and against the database"]
+  DISCOVER --> N["URL normalize and dedupe,
+in-run and against the database"]
   N --> G0["Deterministic gates, zero model cost:
-company ignore list, two title blocklists, hold on companies with an application in flight"]
-  G0 --> F["Fetch the description only now: ATS detail API within a per-target budget, else headless browser"]
+company ignore list, two title blocklists,
+hold on companies with an application in flight"]
+  G0 --> F["Fetch the description only now:
+ATS detail API within a per-target budget,
+else headless browser"]
   F --> PG["Posting integrity gate:
-hidden HTML and invisible characters removed, instruction-shaped lines flagged"]
-  PG --> LLM["Model evaluation against the candidate profile, JSON-mode with a Pydantic schema"]
-  LLM --> POST["Post-model safety nets in code: commute check, active-clearance check, salary floor, forced score on disqualifiers"]
-  POST --> DB[(SQLite, one row per posting tagged with its source, status defaults to NEW)]
-  DB --> UI["Local dashboard: status state machine, auto-pass cascade, notes, ingest-by-URL"]
+hidden HTML and invisible characters removed,
+instruction-shaped lines flagged"]
+  PG --> LLM["Model evaluation against the candidate profile,
+JSON-mode with a Pydantic schema"]
+  LLM --> POST["Post-model safety nets in code:
+commute check, active-clearance check,
+salary floor, forced score on disqualifiers"]
+  POST --> DB[("SQLite, one row per posting
+tagged with its source,
+status defaults to NEW")]
+  DB --> UI["Local dashboard: status state machine,
+auto-pass cascade, notes, ingest-by-URL"]
+
+  classDef io fill:#dbeafe,stroke:#3b82f6,color:#0f172a
+  classDef det fill:#dcfce7,stroke:#16a34a,color:#0f172a
+  classDef guard fill:#fef3c7,stroke:#d97706,color:#0f172a
+  classDef model fill:#ede9fe,stroke:#7c3aed,color:#0f172a
+  classDef store fill:#f1f5f9,stroke:#64748b,color:#0f172a
+  class S1,S2,S3,S4,S5,S6,S7,F io
+  class N,G0,POST det
+  class PG guard
+  class LLM model
+  class DB,UI store
+  style DISCOVER fill:#eff6ff,stroke:#93c5fd,color:#0f172a
 ```
+
+Blue: discovery and fetching. Green: deterministic code, no model cost. Amber: the integrity gate. Purple: the one model call. Gray: storage and the dashboard.
 
 The ordering is the point. Everything cheap and deterministic runs before anything expensive and probabilistic, and the model's answer is checked by code before it is written down.
 
@@ -40,7 +85,7 @@ The system has two halves. The pipeline runs unattended from the command line an
 
 | Command | What it does |
 |---|---|
-| `job_search.py run` | One full pass: discovery from every source, the gates, the integrity check, model scoring and the database write. A stopped run resumes where it ended. |
+| `job_search.py run` | One full pass: discovery from every source, the gates, the integrity check, model scoring and the database write. A stopped run resumes where it ended, because each row is committed as it is scored. |
 | `job_search.py run --dry-run` | Discovery only, for testing a new source or query: no model calls and no database writes. |
 | `job_search.py ingest <url>` | Scores one posting found by hand. It skips the ignore list and the title blocklists, since a person already chose the posting, and only warns when an application at that company is in flight. `--force` re-scores an existing row, and `--remote` or `--location` record a location the operator has checked in place of the geo check. |
 | `job_search.py sources` | Reports rows, high scores, applications and interviews for each discovery source. |
@@ -59,24 +104,13 @@ The system has two halves. The pipeline runs unattended from the command line an
 ## The triage dashboard (demo data)
 
 > [!NOTE]
-> **Demo data.** Every company, posting, score and status in these screenshots is fictional. They come from a demo copy of the dashboard, in which a personal log and two retired track filters are hidden from the sidebar and the subtitle no longer names a track the search has since dropped.
-
-![Demo data: matched roles sorted by score, each with its status, fit verdict, work model, salary range and tech stack](docs/images/dashboard-matches.png)
-
-*Demo data: matched roles, sorted by score.*
+> **Demo data.** Every company, posting, score and status in the screenshots on this page is fictional. They come from a demo copy of the dashboard, in which a personal log and two retired track filters are hidden from the sidebar and the subtitle no longer names a track the search has since dropped.
 
 ![Demo data: one posting opened, showing the model's analysis, the tech stack, the posting-guard stamp in the notes, and the status buttons](docs/images/dashboard-posting.png)
 
 *Demo data: one posting opened.*
 
-The top posting carries the Guard tag: its page hid an instruction addressed to the evaluator, which the posting guard removed before scoring.
-
-## What it has done
-
-- Over 8,000 postings processed since June 2026.
-- 64 percent of those were decided by the deterministic gates (the row's stored reason says which gate) and never reached a model call.
-- Roughly one to two cents per model evaluation on a Flash-class model, with a stable 12,000-token prefix the provider caches.
-- Runs need no supervision once started: a stopped run resumes where it ended, because every row is committed as it is scored.
+This is the posting at the top of the dashboard image above. It carries the Guard tag: its page hid an instruction addressed to the evaluator, which the posting guard removed before scoring.
 
 ## Engineering highlights
 
