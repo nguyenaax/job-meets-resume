@@ -32,13 +32,20 @@ hidden HTML and invisible characters removed, instruction-shaped lines flagged"]
 
 The ordering is the point. Everything cheap and deterministic runs before anything expensive and probabilistic, and the model's answer is checked by code before it is written down.
 
-## The triage dashboard
+## The triage dashboard (demo data)
 
-![Matched roles sorted by score, each with its status, fit verdict, work model, salary range and tech stack](docs/images/dashboard-matches.png)
+> [!NOTE]
+> **Demo data.** Every company, posting, score and status in these screenshots is fictional. They come from a demo copy of the dashboard, in which a personal log and two retired track filters are hidden from the sidebar and the subtitle no longer names a track the search has since dropped.
 
-![One posting opened: the model's analysis, the tech stack, the posting-guard stamp in the notes, and the status buttons](docs/images/dashboard-posting.png)
+![Demo data: matched roles sorted by score, each with its status, fit verdict, work model, salary range and tech stack](docs/images/dashboard-matches.png)
 
-These screenshots come from a demo copy of the dashboard filled with fictional companies and postings. In that copy a personal log and two retired track filters are hidden from the sidebar, and the subtitle no longer names a track the search has since dropped. The top posting carries the Guard tag: its page hid an instruction addressed to the evaluator, which the posting guard removed before scoring.
+*Demo data: matched roles, sorted by score.*
+
+![Demo data: one posting opened, showing the model's analysis, the tech stack, the posting-guard stamp in the notes, and the status buttons](docs/images/dashboard-posting.png)
+
+*Demo data: one posting opened.*
+
+The top posting carries the Guard tag: its page hid an instruction addressed to the evaluator, which the posting guard removed before scoring.
 
 ## What it has done
 
