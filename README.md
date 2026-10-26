@@ -32,6 +32,14 @@ hidden HTML and invisible characters removed, instruction-shaped lines flagged"]
 
 The ordering is the point. Everything cheap and deterministic runs before anything expensive and probabilistic, and the model's answer is checked by code before it is written down.
 
+## The triage dashboard
+
+![Matched roles sorted by score, each with its status, fit verdict, work model, salary range and tech stack](docs/images/dashboard-matches.png)
+
+![One posting opened: the model's analysis, the tech stack, the posting-guard stamp in the notes, and the status buttons](docs/images/dashboard-posting.png)
+
+These screenshots come from a demo copy of the dashboard filled with fictional companies and postings. In that copy a personal log and two retired track filters are hidden from the sidebar, and the subtitle no longer names a track the search has since dropped. The top posting carries the Guard tag: its page hid an instruction addressed to the evaluator, which the posting guard removed before scoring.
+
 ## What it has done
 
 - Over 8,000 postings processed since June 2026.
@@ -76,6 +84,7 @@ docs/
   evaluation.md        how scoring works and what code checks after the model
   integrity-gate.md    the posting guard: what it removes, what it flags, what it ignores
   status-model.md      the application state machine and the auto-pass cascade
+  images/              dashboard screenshots from a demo database of fictional postings
 engineering/
   posting_guard.py     complete module with an offline self-test (python posting_guard.py --selftest)
   company_match.py     complete module
