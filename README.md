@@ -6,7 +6,7 @@ A personal job-discovery pipeline that scores job postings against one resume. T
 
 ![Demo data: the triage dashboard listing fictional analyst postings by score, the top one carrying the Guard tag](docs/images/dashboard-hero.png)
 
-*Demo data: the triage dashboard running on fictional companies and postings; see the note under [The triage dashboard](#the-triage-dashboard-demo-data).*
+*Demo data: the triage dashboard running on fictional companies and postings; see the note under [The triage dashboard](#the-triage-dashboard).*
 
 **This repository is a showcase, not the source.** It documents the architecture and the engineering behind a system I run daily, and includes the infrastructure modules that stand on their own. What stays private, and why, is listed under [What is withheld](#what-is-withheld-and-why). I designed the pipeline and directed AI coding tools to build and debug much of it, and I am happy to discuss the architecture and the engineering decisions behind it.
 
@@ -91,10 +91,10 @@ The system has two halves. The pipeline runs unattended from the command line, f
 | `job_search.py sources` | Reports rows, high scores, applications and interviews for each discovery source. |
 | `dashboard_server.py` | Serves the local triage dashboard shown below. |
 
-### The triage dashboard (demo data)
+### The triage dashboard
 
 > [!NOTE]
-> **Demo data.** Every company, posting, score and status in the screenshots on this page is fictional. The dashboard images come from a demo copy of the dashboard, in which a personal log and two retired track filters are hidden from the sidebar and the subtitle no longer names a track the search has since dropped.
+> **Demo data.** Every company, posting, score and status in the screenshots on this page is fictional. The screenshots come from a demo copy with a personal log and a few retired labels hidden.
 
 ![Demo data: one posting opened, showing the model's analysis, the tech stack, the posting-guard stamp in the notes, and the status buttons](docs/images/dashboard-posting.png)
 
