@@ -102,10 +102,14 @@ The system has two halves. The pipeline runs unattended from the command line an
 | `/job-picture` | Draws the role as one diagram from the posting alone: inputs on the left, the posting's responsibilities as numbered zones, consumers on the right, and the points where the hire makes decisions. | Read a resume, or present the diagram as knowledge of the team's real system. |
 | `/mock`, `/cover`, `/review` | Runs mock interview rounds, drafts a cover letter, and checks a draft for repetition and formatting. | Put salary or home location into anything an employer will read. |
 
+![Demo data: a /job-picture diagram of a fictional posting, with the posting's six responsibilities as numbered zones and the analyst's own decisions in orange](docs/images/job-picture-demo.png)
+
+*Demo data: `/job-picture` drawn from a fictional posting written for this demo, for the Tidegrove Analytics role at the top of the dashboard image above. Orange marks where the analyst decides; dashed teal lines are loops.*
+
 ## The triage dashboard (demo data)
 
 > [!NOTE]
-> **Demo data.** Every company, posting, score and status in the screenshots on this page is fictional. They come from a demo copy of the dashboard, in which a personal log and two retired track filters are hidden from the sidebar and the subtitle no longer names a track the search has since dropped.
+> **Demo data.** Every company, posting, score and status in the screenshots on this page is fictional. The dashboard images come from a demo copy of the dashboard, in which a personal log and two retired track filters are hidden from the sidebar and the subtitle no longer names a track the search has since dropped.
 
 ![Demo data: one posting opened, showing the model's analysis, the tech stack, the posting-guard stamp in the notes, and the status buttons](docs/images/dashboard-posting.png)
 
@@ -151,7 +155,7 @@ docs/
   evaluation.md        how scoring works and what code checks after the model
   integrity-gate.md    the posting guard: what it removes, what it flags, what it ignores
   status-model.md      the application state machine and the auto-pass cascade
-  images/              dashboard screenshots from a demo database of fictional postings
+  images/              demo screenshots of fictional postings: the dashboard and one /job-picture
 engineering/
   posting_guard.py     complete module with an offline self-test (python posting_guard.py --selftest)
   company_match.py     complete module
