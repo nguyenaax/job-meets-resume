@@ -104,7 +104,7 @@ The system has two halves. The pipeline runs unattended from the command line an
 
 ![Demo data: a /job-picture diagram of a fictional posting, with the posting's six responsibilities as numbered zones and the analyst's own decisions in orange](docs/images/job-picture-demo.png)
 
-*Demo data: `/job-picture` drawn from a fictional posting written for this demo, for the Tidegrove Analytics role at the top of the dashboard image above. Orange marks where the analyst decides; dashed teal lines are loops.*
+*Demo data: `/job-picture` drawn from [a fictional posting](docs/demo/tidegrove-posting.md) written for this demo, for the Tidegrove Analytics role at the top of the dashboard image above. Orange marks where the analyst decides; dashed teal lines are loops.*
 
 ## The triage dashboard (demo data)
 
@@ -155,6 +155,7 @@ docs/
   evaluation.md        how scoring works and what code checks after the model
   integrity-gate.md    the posting guard: what it removes, what it flags, what it ignores
   status-model.md      the application state machine and the auto-pass cascade
+  demo/                the fictional posting behind the /job-picture image, and the diagram page itself
   images/              demo screenshots of fictional postings: the dashboard and one /job-picture
 engineering/
   posting_guard.py     complete module with an offline self-test (python posting_guard.py --selftest)
