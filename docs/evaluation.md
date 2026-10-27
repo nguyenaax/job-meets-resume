@@ -25,8 +25,8 @@ The prompt is private, but its shape is ordinary and worth stating.
 
 - **Verdict labels are a closed set**, and two of them were split after use showed they were different findings: "Overqualified" (the role is on the candidate's track but scoped below them) and "Misaligned" (the daily work is a different discipline). Track decides whether to pursue; level only decides how to frame it.
 - **Gaps are typed by time**, which is what makes them actionable downstream.
-- **Estimates are quarantined.** `salary_is_estimated` is a separate flag, and the salary gate in code reads only stated values.
-- **Disqualifiers are booleans.** `clearance_required` stays free text for the reader, and `active_clearance_required` is a separate flag for the one case that disqualifies: a clearance the applicant must already hold. A clearance the employer sponsors after hire, or one a posting only prefers, leaves the flag false. Code gates on the flag and never parses the text.
+- **Estimates are quarantined.** An estimated salary goes in its own fields with `salary_is_estimated` set, so it can be shown to the reader without ever passing for a stated one.
+- **Disqualifiers are booleans, so code never parses prose.** `clearance_required` stays free text for the reader, and `active_clearance_required` is a separate flag for the one case that disqualifies: a clearance the applicant must already hold. A clearance the employer sponsors after hire, or one a posting only prefers, leaves the flag false.
 - **Context fields never score.** Company stage is recorded for the reader and the prompt says so.
 
 ## After the model
@@ -40,7 +40,7 @@ Code checks four things the model might have gotten wrong:
 
 ## Model selection
 
-A fallback chain of Flash-class models, ordered by a small blind comparison: each candidate model re-scored postings the operator had already decided on, and the model whose scores tracked those decisions best went first. The comparison also caught a wording trap the previous model fell into, where two jobs that share nouns but not verbs were being scored as the same work. A second provider's models ranked the postings the same way on a shifted scale and would have needed their own cutoff; the chain stayed with the cheaper provider.
+The fallback chain is made of Flash-class models, ordered by a small blind comparison: each candidate model re-scored postings the operator had already decided on, and the model whose scores tracked those decisions best went first. The comparison also caught a wording trap the previous model fell into, where two jobs that share nouns but not verbs were being scored as the same work. A vulnerability researcher finds bugs in code and a vulnerability intelligence analyst tracks the ones already disclosed, yet both postings are full of exploits, patches and proofs of concept. A second provider's models ranked the postings the same way on a shifted scale and would have needed their own cutoff; the chain stayed with the cheaper provider.
 
 ## Known limits
 

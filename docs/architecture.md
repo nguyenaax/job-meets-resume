@@ -14,17 +14,17 @@ One Python process, one SQLite file, one local dashboard. No queue, no cloud, no
 
 ## A run, phase by phase
 
-**Phase 0, pre-matched import.** A spreadsheet of postings that were already matched elsewhere is read through a service account. Those rows skip the model entirely but still pass the deterministic gates, and the sheet's status column can only fill rows the dashboard has not touched; a decision made in the dashboard always wins.
+**Phase 0, pre-matched import.** A spreadsheet of postings that were already matched elsewhere is read through a service account. Those rows skip the model entirely but still go through the deterministic gates, and the sheet's status column can only fill rows the dashboard has not touched; a decision made in the dashboard always wins.
 
-**Phase 1, ATS public APIs.** For every company on the target list, the provider's JSON endpoint: Greenhouse, Lever and Ashby boards; Workday's undocumented career-site API; SmartRecruiters' postings API; Workable and Recruitee, which return descriptions inline. Large boards are swept with search terms rather than pulled whole. Workday and SmartRecruiters need a detail call per description, so each target has a detail budget, and the run asks a callback whether a given job will even be used before spending a call.
+**Phase 1, ATS public APIs.** Each company on the target list is queried through its provider's JSON endpoint: Greenhouse, Lever and Ashby boards; Workday's undocumented career-site API; SmartRecruiters' postings API; Workable and Recruitee, which return descriptions inline. Large boards are swept with search terms rather than pulled whole. Workday and SmartRecruiters need a detail call per description, so each target has a detail budget, and the run asks a callback whether a given job will even be used before spending a call.
 
-**Phase 2, headless browser.** Only for Workday targets the API could not serve this run. A target served by the API is never scraped a second way.
+**Phase 2, headless browser.** The browser runs only for Workday targets the API could not serve this run. A target served by the API is never scraped a second way.
 
-**Phase 3, search dorks.** Search-engine queries against public ATS domains and job sites for technical keywords, the catch-all for companies not on the target list. A hit is kept only when its URL matches the single-posting pattern for that site, so board index pages and other non-posting links are dropped before they cost anything. The title and company are parsed from each site's own result-title format.
+**Phase 3, search dorks.** Search-engine queries run against public ATS domains and job sites for technical keywords, as the catch-all for companies not on the target list. A hit is kept only when its URL matches the single-posting pattern for that site, so board index pages and other non-posting links are dropped before they cost anything. The title and company are parsed from each site's own result-title format.
 
-**Phases 4 and 5, feeds.** A curated security-jobs feed and two remote-job feeds that carry the description in the feed payload.
+**Phases 4 and 5, feeds.** A curated security-jobs feed and two remote-job feeds are read next. They carry the description in the feed payload, so their postings never need a page fetch.
 
-**Phase 6, federal postings.** The federal government's job search API, which needs a free key. It asks only for postings open to the public, in a short list of occupational series codes, and searches each term twice: once within a radius of the commute area and once for remote work. The description is assembled from the API's structured fields, and the application closing date is kept as the posting's deadline. A run without the key prints one skip line and moves on.
+**Phase 6, federal postings.** The run then queries the federal government's job search API, which needs a free key. It asks only for postings open to the public, in a short list of occupational series codes, and searches each term twice: once within a radius of the commute area and once for remote work. The description is assembled from the API's structured fields, and the application closing date is kept as the posting's deadline. A run without the key prints one skip line and moves on.
 
 **Normalize and dedupe.** Tracking parameters and fragments are stripped; a posting seen in this run or already in the database is dropped.
 
@@ -34,7 +34,7 @@ One Python process, one SQLite file, one local dashboard. No queue, no cloud, no
 
 **Posting guard.** Every description, whichever path produced it, passes through the integrity gate before truncation. See `integrity-gate.md`.
 
-**Evaluation.** One model call per posting, JSON mode, Pydantic schema, a fallback chain of models. See `evaluation.md`.
+**Evaluation.** Each posting gets one model call in JSON mode against a Pydantic schema, with a fallback chain of models behind it. See `evaluation.md`.
 
 **Post-model checks in code.** A disqualifying location forces the score to 1. A commute keyword check on the extracted location catches the case where the model extracted the right place and did not set the flag. A posting the model flagged as requiring a clearance the applicant must already hold is logged as a dealbreaker with a score of 1; a clearance the employer will sponsor after hire passes. A salary floor applies only when the posting states a salary; an estimate never disqualifies.
 
@@ -42,7 +42,7 @@ One Python process, one SQLite file, one local dashboard. No queue, no cloud, no
 
 ## Manual ingest
 
-Any URL can be evaluated on demand from the command line, skipping the title gates and warning instead of holding. An operator-verified location can be supplied for postings that print one office address while the recruiter has confirmed remote; it is injected into the prompt as trusted input above the untrusted posting, and the row is stamped so a later reader sees why a well-scored row has an onsite address.
+Any URL can be evaluated on demand from the command line. A person already chose the posting, so it skips the ignore list and the title gates, and an application already in flight at that company prints a warning instead of holding the posting. An operator-verified location can be supplied for postings that print one office address while the recruiter has confirmed remote; it is injected into the prompt as trusted input above the untrusted posting, and the row is stamped so a later reader sees why a well-scored row has an onsite address.
 
 ## Cost model
 
