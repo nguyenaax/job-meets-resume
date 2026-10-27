@@ -28,7 +28,7 @@ boards the API could not serve"]
 not on the target list, kept only
 when the URL is a single posting"]
     S4["Curated security-jobs feed"]
-    S5["Remote-job feeds that carry
+    S5["A remote-job feed that carries
 descriptions inline"]
     S6["A pre-matched spreadsheet import
 that skips the model"]
