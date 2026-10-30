@@ -36,8 +36,8 @@ security jobs"]
     S5["<b>Remote-job feed:</b>
 descriptions carried inline"]
     S6["<b>Spreadsheet import:</b>
-pre-matched, so it gets
-the gates and no model call"]
+pre-matched, so gates only,
+no model call"]
     S7["<b>Federal job search API:</b>
 keyed, queried by
 occupational series
@@ -53,7 +53,8 @@ company ignore list, two title blocklists,
 hold on companies with an application in flight"]
   G0 --> F["<b>Fetch what is missing:</b> headless browser,
 only for postings still without a description
-(ATS detail calls and feeds already carry one)"]
+(many already carry one from
+an ATS detail call or a feed)"]
   F --> PG["<b>Posting integrity gate:</b>
 hidden HTML and invisible
 characters removed,

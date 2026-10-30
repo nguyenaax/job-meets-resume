@@ -22,7 +22,7 @@ One Python process, one SQLite file, one local dashboard. No queue, no cloud, no
 
 **Phase 3, search dorks.** Search-engine queries run against public ATS domains and job sites for technical keywords, as the catch-all for companies not on the target list. A hit is kept only when its URL matches the single-posting pattern for that site, so board index pages and other non-posting links are dropped before they cost anything. The title and company are parsed from each site's own result-title format.
 
-**Phases 4 and 5, feeds.** A curated security-jobs feed and a remote-job feed are read next. Both carry the description in the feed payload, so their postings never need a page fetch.
+**Phases 4 and 5, feeds.** A curated security-jobs feed and a remote-job feed are read next. The remote-job feed carries the description in its payload, so its postings never need a page fetch. The security-jobs feed lists links only, so its postings are fetched by the browser once they pass the gates.
 
 **Phase 6, federal postings.** The run then queries the federal government's job search API, which needs a free key. It asks only for postings open to the public, in a short list of occupational series codes, and searches each term twice: once within a radius of the commute area and once for remote work. The description is assembled from the API's structured fields, and the application closing date is kept as the posting's deadline. A run without the key prints one skip line and moves on.
 
