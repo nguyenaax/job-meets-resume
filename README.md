@@ -19,7 +19,7 @@ A personal job-discovery pipeline that scores job postings against one resume. T
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 340}}}%%
 flowchart TD
-  subgraph DISCOVER["<b>Discovery:</b> seven sources, each isolated so one failure does not stop the run"]
+  subgraph DISCOVER["<b>Discovery:</b> six sources, each isolated so one failure does not stop the run"]
     S1["<b>Public ATS JSON APIs:</b>
 target companies on Greenhouse,
 Lever, Ashby, Workday,
@@ -33,8 +33,6 @@ kept only when the URL
 is a single posting"]
     S4["<b>Curated feed:</b>
 security jobs"]
-    S5["<b>Remote-job feed:</b>
-descriptions carried inline"]
     S6["<b>Spreadsheet import:</b>
 pre-matched, so gates only,
 no model call"]
@@ -42,8 +40,8 @@ no model call"]
 keyed, queried by
 occupational series
 and metro radius"]
-    S1 ~~~ S2 ~~~ S3 ~~~ S4
-    S5 ~~~ S6 ~~~ S7
+    S1 ~~~ S2 ~~~ S3
+    S4 ~~~ S6 ~~~ S7
   end
   DISCOVER --> N["<b>Normalize and dedupe:</b>
 URLs cleaned, repeats dropped
@@ -54,7 +52,7 @@ hold on companies with an application in flight"]
   G0 --> F["<b>Fetch what is missing:</b> headless browser,
 only for postings still without a description
 (many already carry one from
-an ATS detail call or a feed)"]
+an ATS detail call or the federal API)"]
   F --> PG["<b>Posting integrity gate:</b>
 hidden HTML and invisible
 characters removed,
@@ -80,7 +78,7 @@ postings the pipeline never found"]
   classDef guard fill:#fef3c7,stroke:#d97706,color:#0f172a
   classDef model fill:#ede9fe,stroke:#7c3aed,color:#0f172a
   classDef store fill:#f1f5f9,stroke:#64748b,color:#0f172a
-  class S1,S2,S3,S4,S5,S6,S7,F io
+  class S1,S2,S3,S4,S6,S7,F io
   class N,G0,POST det
   class PG guard
   class LLM model

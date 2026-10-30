@@ -6,7 +6,7 @@ The module is adapted from `tools/posting_guard.py` in [ai-job-search](https://g
 
 ## Where it runs
 
-At every point HTML becomes text: the ATS detail fetchers, the inline-description feeds, and both paths of the browser fetch (the JSON-LD description and the rendered page). Always before the 8,000-character truncation, so hidden text at the end of a long page is still seen. The verdict is applied once, after fetch and before the model.
+At every point HTML becomes text: the ATS detail fetchers, the federal job API, and both paths of the browser fetch (the JSON-LD description and the rendered page). Always before the 8,000-character truncation, so hidden text at the end of a long page is still seen. The verdict is applied once, after fetch and before the model.
 
 ## What it removes
 

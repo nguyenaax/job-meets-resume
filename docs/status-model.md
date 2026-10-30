@@ -36,7 +36,7 @@ The scraper's hold gate skips new postings at companies with an active applicati
 
 ## Why a matcher at all
 
-Company names arrive from seven ATS providers, two feeds and a search engine, and they do not agree. The matcher normalizes to lowercase tokens, strips trailing corporate suffixes, and matches on token prefix. "Acme" matches "Acme Ltd" and "Acme Security". "Nova" does not match "Supernova", because free substring matching produced exactly that kind of false positive on real board data. Placeholders like "Unknown Company" never match anything.
+Company names arrive from seven ATS providers, a feed, a federal job API and a search engine, and they do not agree. The matcher normalizes to lowercase tokens, strips trailing corporate suffixes, and matches on token prefix. "Acme" matches "Acme Ltd" and "Acme Security". "Nova" does not match "Supernova", because free substring matching produced exactly that kind of false positive on real board data. Placeholders like "Unknown Company" never match anything.
 
 ## Dates
 
