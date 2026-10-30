@@ -1,0 +1,11 @@
+# Lint rules for the engineering/ excerpts, checked in CI by
+# .github/workflows/lint.yml. The set is listed in full rather than left to
+# ruff's defaults, so a ruff upgrade cannot widen it without a commit here.
+#   E4, E7, E9  pycodestyle errors: bad imports, statements, syntax
+#   F           pyflakes: undefined names, unused imports and variables
+#   B           flake8-bugbear: likely bugs such as mutable default arguments
+#   S           flake8-bandit: security checks (shell injection, unsafe
+#               deserialization, requests without a timeout, and so on)
+
+[lint]
+select = ["E4", "E7", "E9", "F", "B", "S"]
