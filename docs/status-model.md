@@ -7,6 +7,7 @@ Every row carries one status, changed only through the dashboard's API. The stat
 | Status | Meaning |
 |---|---|
 | NEW | Scored, no decision yet |
+| PARKED | Set aside to come back to, such as a role with a tailored resume not yet sent; not an application |
 | PASS | Operator declined |
 | MISMATCH | Scored wrong; hidden from the default view and kept for prompt review |
 | APPLIED | Application submitted; stamps the applied date |
@@ -16,6 +17,8 @@ Every row carries one status, changed only through the dashboard's API. The stat
 | REJECTED_INTERVIEW | Turned down after at least one interview |
 
 The two rejection statuses exist because they answer different questions when the operator reviews what is working. Both end the application.
+
+PARKED is a bookmark, not an application. It stamps no applied date, starts no auto-pass cascade and does not hold the company at the scraper's gate, and the cascade only touches NEW rows, so a parked role survives an application to a sibling role. A parked row stays visible whatever its score. A form in the dashboard parks a posting the pipeline never found, as a row with no model score.
 
 ## The auto-pass cascade
 

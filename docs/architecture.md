@@ -9,7 +9,7 @@ One Python process, one SQLite file, one local dashboard. No queue, no cloud, no
 | Scraper (`job_search.py`, private) | Discovery, gating, fetching, evaluation, persistence. About 2,500 lines. |
 | Posting guard (`posting_guard.py`, published) | Integrity gate between fetch and model. |
 | Company matcher (`company_match.py`, published) | One shared definition of "same company". |
-| Dashboard (`dashboard_server.py` and `dashboard.html`, private) | Local HTTP server on the standard library, one HTML file, the status state machine, notes, ingest by URL. |
+| Dashboard (`dashboard_server.py` and `dashboard.html`, private) | Local HTTP server on the standard library, one HTML file, the status state machine, notes, ingest by URL, and a form that parks postings found elsewhere. |
 | Configuration | A target list (company, ATS, slug, URL, optional per-target search terms and budgets), a `.env` with the API keys, a candidate profile the prompt reads. |
 
 ## A run, phase by phase

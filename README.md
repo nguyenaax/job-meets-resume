@@ -2,13 +2,13 @@
 
 ![Python 3.14](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white) ![License: MIT](https://img.shields.io/badge/License-MIT-2ea44f) ![Showcase: source private](https://img.shields.io/badge/Showcase-source%20private-6e7781)
 
-A personal job-discovery pipeline that scores job postings against one resume. The pipeline ranks postings and never edits the resume. Tailoring is a separate chat-side step, taken one posting at a time, that writes a new file and leaves the master resume untouched. The name is a play on dating apps: most postings are turned down by deterministic gates before they ever meet the model.
+A personal job-discovery pipeline that scores job postings against one resume. The pipeline ranks postings and never edits the resume. Tailoring is a separate chat-side step, taken one posting at a time, that writes a new file and leaves the master resume untouched.
 
 ![Demo data: the triage dashboard listing fictional analyst postings by score, the top one carrying the Guard tag](docs/images/dashboard-hero.png)
 
 *Demo data: the triage dashboard running on fictional companies and postings; see the note under [The triage dashboard](#the-triage-dashboard).*
 
-**This repository is a showcase, not the source.** It documents the architecture and the engineering behind a system I run daily, and includes the infrastructure modules that stand on their own. What stays private, and why, is listed under [What is withheld](#what-is-withheld-and-why). I designed the pipeline and directed AI coding tools to build and debug much of it, and I am happy to discuss the architecture and the engineering decisions behind it.
+**This repository is a showcase, not the source.** It documents the architecture and the engineering behind a system I run daily, and includes the infrastructure modules that stand on their own. What stays private, and why, is listed under [What is withheld](#what-is-withheld-and-why). I designed the pipeline and directed Claude Code to build and debug much of it.
 
 | 8,000+ | 64% | 1 to 2 cents |
 |:---:|:---:|:---:|
@@ -17,48 +17,62 @@ A personal job-discovery pipeline that scores job postings against one resume. T
 ## Pipeline at a glance
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 340}}}%%
 flowchart TD
-  subgraph DISCOVER["Discovery, seven sources, each isolated so one failure does not stop the run"]
-    S1["Public ATS JSON APIs for a target list:
-Greenhouse, Lever, Ashby, Workday,
+  subgraph DISCOVER["<b>Discovery:</b> seven sources, each isolated so one failure does not stop the run"]
+    S1["<b>Public ATS JSON APIs:</b>
+target companies on Greenhouse,
+Lever, Ashby, Workday,
 SmartRecruiters, Workable, Recruitee"]
-    S2["Headless browser, only for Workday
-boards the API could not serve"]
-    S3["Search-engine dorks for companies
-not on the target list, kept only
-when the URL is a single posting"]
-    S4["Curated security-jobs feed"]
-    S5["A remote-job feed that carries
-descriptions inline"]
-    S6["A pre-matched spreadsheet import
-that skips the model"]
-    S7["Federal job search API, keyed,
-queried by occupational series
+    S2["<b>Headless browser:</b>
+only for Workday boards
+the API could not serve"]
+    S3["<b>Search-engine dorks:</b>
+companies off the target list,
+kept only when the URL
+is a single posting"]
+    S4["<b>Curated feed:</b>
+security jobs"]
+    S5["<b>Remote-job feed:</b>
+descriptions carried inline"]
+    S6["<b>Spreadsheet import:</b>
+pre-matched, so it gets
+the gates and no model call"]
+    S7["<b>Federal job search API:</b>
+keyed, queried by
+occupational series
 and metro radius"]
     S1 ~~~ S2 ~~~ S3 ~~~ S4
     S5 ~~~ S6 ~~~ S7
   end
-  DISCOVER --> N["URL normalize and dedupe,
+  DISCOVER --> N["<b>Normalize and dedupe:</b>
+URLs cleaned, repeats dropped
 in-run and against the database"]
-  N --> G0["Deterministic gates, zero model cost:
+  N --> G0["<b>Deterministic gates, zero model cost:</b>
 company ignore list, two title blocklists,
 hold on companies with an application in flight"]
-  G0 --> F["Fetch the description only now:
-ATS detail API within a per-target budget,
-else headless browser"]
-  F --> PG["Posting integrity gate:
-hidden HTML and invisible characters removed,
+  G0 --> F["<b>Fetch what is missing:</b> headless browser,
+only for postings still without a description
+(ATS detail calls and feeds already carry one)"]
+  F --> PG["<b>Posting integrity gate:</b>
+hidden HTML and invisible
+characters removed,
 instruction-shaped lines flagged"]
-  PG --> LLM["Model evaluation against the candidate profile,
-JSON-mode with a Pydantic schema"]
-  LLM --> POST["Post-model safety nets in code:
-commute check, active-clearance check,
-salary floor, forced score on disqualifiers"]
-  POST --> DB[("SQLite, one row per posting
+  PG --> LLM["<b>Model evaluation:</b>
+one call against the candidate profile,
+JSON mode with a Pydantic schema"]
+  LLM --> POST["<b>Post-model checks in code:</b>
+location (commute area or outside the US),
+clearance already held, salary floor;
+a failed check forces a score of 1"]
+  POST --> DB[("<b>SQLite:</b> one row per posting,
 tagged with its source,
 status defaults to NEW")]
-  DB --> UI["Local dashboard: status state machine,
-auto-pass cascade, notes, ingest-by-URL"]
+  G0 -. "spreadsheet rows<br>skip the model" .-> DB
+  DB --> UI["<b>Local dashboard:</b> status state machine,
+auto-pass cascade, notes, ingest by URL,
+parking roles to come back to, including
+postings the pipeline never found"]
 
   classDef io fill:#dbeafe,stroke:#3b82f6,color:#0f172a
   classDef det fill:#dcfce7,stroke:#16a34a,color:#0f172a
@@ -73,7 +87,13 @@ auto-pass cascade, notes, ingest-by-URL"]
   style DISCOVER fill:#eff6ff,stroke:#93c5fd,color:#0f172a
 ```
 
-Blue: discovery and fetching. Green: deterministic code, no model cost. Amber: the integrity gate. Purple: the one model call. Gray: storage and the dashboard.
+| Color | Stage |
+|---|---|
+| 🟦 Blue | Discovery and fetching |
+| 🟩 Green | Deterministic code, no model cost |
+| 🟨 Amber | The integrity gate |
+| 🟪 Purple | The one model call |
+| ⬜ Gray | Storage and the dashboard |
 
 The ordering is the point. Everything cheap and deterministic runs before anything expensive and probabilistic, and the model's answer is checked by code before it is written down.
 
@@ -90,6 +110,7 @@ The system has two halves. The pipeline runs unattended from the command line, f
 | `job_search.py ingest <url>` | Scores one posting found by hand. It skips the ignore list and the title blocklists, since a person already chose the posting, and only warns when an application at that company is in flight. `--force` re-scores an existing row, and `--remote` or `--location` record a location the operator has checked in place of the geo check. |
 | `job_search.py sources` | Reports rows, high scores, applications and interviews for each discovery source. |
 | `dashboard_server.py` | Serves the local triage dashboard shown below. |
+| `dashboard_server.py park <url>` | Parks a role to come back to, such as one with a tailored resume not yet sent, without opening the dashboard. Parking is not an application, so it holds nothing at that company. |
 
 ### The triage dashboard
 
