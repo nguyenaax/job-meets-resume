@@ -34,8 +34,8 @@ is a single posting"]
     S4["<b>Curated feed:</b>
 security jobs"]
     S6["<b>Spreadsheet import:</b>
-pre-matched, so gates only,
-no model call"]
+picks from a second agent,
+scored like every other source"]
     S7["<b>Federal job search API:</b>
 keyed, queried by
 occupational series
@@ -67,7 +67,7 @@ a failed check forces a score of 1"]
   POST --> DB[("<b>SQLite:</b> one row per posting,
 tagged with its source,
 status defaults to NEW")]
-  G0 -. "spreadsheet rows<br>skip the model" .-> DB
+  F -. "spreadsheet rows whose<br>page cannot be read,<br>kept unscored" .-> DB
   DB --> UI["<b>Local dashboard:</b> status state machine,
 auto-pass cascade, notes, ingest by URL,
 parking roles to come back to, including
