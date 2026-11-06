@@ -9,7 +9,8 @@ One Python process, one SQLite file, one local dashboard. No queue, no cloud, no
 | Scraper (`job_search.py`, private) | Discovery, gating, fetching, evaluation, persistence. About 2,500 lines. |
 | Posting guard (`posting_guard.py`, published) | Integrity gate between fetch and model. |
 | Company matcher (`company_match.py`, published) | One shared definition of "same company". |
-| Dashboard (`dashboard_server.py` and `dashboard.html`, private) | Local HTTP server on the standard library, one HTML file, the status state machine, notes, ingest by URL, and a form that parks postings found elsewhere. |
+| Dashboard (`dashboard_server.py` and `dashboard.html`, private) | Local HTTP server on the standard library, one HTML file, the status state machine, notes, ingest by URL, a form that parks postings found elsewhere, and a skill demand view. |
+| Skill demand board (`skill_demand.py`, private) | The fixed skill list, the one demand count, the spreadsheet refresh and the studying-now read. Imports nothing from the scraper and runs without the candidate's files. |
 | Configuration | A target list (company, ATS, slug, URL, optional per-target search terms and budgets), a `.env` with the API keys, a candidate profile the prompt reads. |
 
 ## A run, phase by phase
@@ -42,14 +43,16 @@ One Python process, one SQLite file, one local dashboard. No queue, no cloud, no
 
 **Persist.** One row per URL, tagged with the discovery phase that found it, so a report can rank sources by rows, high scores, applications and interviews. Status defaults to NEW. Rows are committed as they are scored.
 
+**Skill demand refresh.** At the end of a full run (never a dry run), the skill demand count is recomputed and written to a spreadsheet the operator reads, through the same service account as the Phase 0 import. The count covers active, location-eligible rows above a score cutoff within a recent window, and the dashboard view, the command-line report and the sheet all call the same function, so their numbers agree. The refresh writes only count cells. It finds each skill's row by a key column, appends a row for a skill the sheet lacks, and stops without writing if no row matches at all, so a reshaped tab never gets a second copy of the table. The operator's own columns, a status dropdown and notes, are never written. A failed refresh prints one line and never fails the run.
+
 ## Manual ingest
 
 Any URL can be evaluated on demand from the command line. A person already chose the posting, so it skips the ignore list and the title gates, and an application already in flight at that company prints a warning instead of holding the posting. An operator-verified location can be supplied for postings that print one office address while the recruiter has confirmed remote; it is injected into the prompt as trusted input above the untrusted posting, and the row is stamped so a later reader sees why a well-scored row has an onsite address.
 
 ## Cost model
 
-The prompt is about 13,500 tokens, of which about 12,000 is a stable prefix (profile, plan, rubric) that the provider caches implicitly when it stays at the front. At the recent rate of about eight model evaluations a day (the first months ran two to three times higher while the target list was being built) that is one to five dollars a month on a Flash-class model. The deterministic gates are what keep it there: in production they have decided 64 percent of postings at zero model cost.
+The prompt is about 13,500 tokens, of which about 12,000 is a stable prefix (profile, studying-now list, rubric) that the provider caches implicitly when it stays at the front. At the recent rate of about eight model evaluations a day (the first months ran two to three times higher while the target list was being built) that is one to five dollars a month on a Flash-class model. The deterministic gates are what keep it there: in production they have decided 64 percent of postings at zero model cost.
 
 ## What a run prints
 
-Each phase reports its count. Each evaluated posting prints its title, company, score, verdict and reasoning. A flagged posting prints the guard's summary and up to three quoted lines. A stopped run says why in one line: quota window, retired model name, or depleted balance.
+Each phase reports its count. Each evaluated posting prints its title, company, score, verdict and reasoning. A flagged posting prints the guard's summary and up to three quoted lines. A stopped run says why in one line: quota window, retired model name, or depleted balance. A full run ends with one line from the skill demand refresh, or the reason it was skipped.

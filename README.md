@@ -108,6 +108,8 @@ The system has two halves. The pipeline runs unattended from the command line, f
 | `job_search.py run --dry-run` | Discovery only, for testing a new source or query: no model calls and no database writes. |
 | `job_search.py ingest <url>` | Scores one posting found by hand. It skips the ignore list and the title blocklists, since a person already chose the posting, and only warns when an application at that company is in flight. `--force` re-scores an existing row, and `--remote` or `--location` record a location the operator has checked in place of the geo check. |
 | `job_search.py sources` | Reports rows, high scores, applications and interviews for each discovery source. |
+| `skill_demand.py report` | Prints how many recent in-scope postings ask for each skill on a fixed list, how many list it as required, and how many the model called a gap. Opens the database read-only. |
+| `skill_demand.py sheet [--dry-run]` | Rewrites the skill demand spreadsheet by hand, or prints the planned writes. A full `run` does this on its own when it finishes. |
 | `dashboard_server.py` | Serves the local triage dashboard shown below. |
 | `dashboard_server.py park <url>` | Parks a role to come back to, such as one with a tailored resume not yet sent, without opening the dashboard. Parking is not an application, so it holds nothing at that company. |
 
@@ -121,6 +123,8 @@ The system has two halves. The pipeline runs unattended from the command line, f
 *Demo data: one posting opened.*
 
 This is the Tidegrove Analytics posting from the screenshot at the top of the page. It carries the Guard tag: its page hid an instruction addressed to the evaluator, which the posting guard removed before scoring.
+
+A Skill Demand view, not pictured, tables the same count as `skill_demand.py report`, skill by skill.
 
 ### Chat-side skills
 
@@ -147,6 +151,8 @@ A posting that survives triage moves to the chat side.
 
 **Structured output, then code.** The model answers a Pydantic schema, never prose ([`engineering/schema.py`](engineering/schema.py)). Gaps are typed by time-to-close rather than subject. Salary estimates are display-only and can never trip the salary gate. The commute and salary rules are re-applied in code after the model answers, because real rows came back with an out-of-area city in `true_location` and `geo_disqualified` still false. A clearance the applicant must already hold is its own boolean beside the free-text clearance field, so the check in code reads a flag rather than parsing prose. See [`docs/evaluation.md`](docs/evaluation.md).
 
+**A fixed skill list turns free text into counts.** The model's gap lists are free text, and when the skill tags were added most distinct gap strings across the counted roles appeared exactly once, so nothing could be ranked. One list of about 20 analyst skills now drives the schema's skill enum, a keyword fallback for older rows, the dashboard view and a spreadsheet the run rewrites at the end, and the tags are barred from moving the score. The same change shortened what the scorer reads about the candidate's studying: a long upskilling plan had become an input that could only make scoring more generous, so it was replaced with a short list of what is being studied now. See [`docs/evaluation.md`](docs/evaluation.md).
+
 **Every row records its source.** The discovery phase that found a posting is stored with it, so a source earns its place by what it produced (rows, high scores, applications, interviews) rather than by how many postings it returns.
 
 **One application per company, enforced on both surfaces.** A single token-prefix company matcher ([`engineering/company_match.py`](engineering/company_match.py)) serves the pipeline's hold gate and the dashboard's cascade, so "Acme" matches "Acme Ltd" everywhere and "Nova" never matches "Supernova" anywhere.
@@ -162,7 +168,7 @@ A posting that survives triage moves to the chat side.
 | Withheld | Reason |
 |---|---|
 | The evaluation prompt and scoring rubric | The calibrated judgment is the value of the system |
-| The candidate profile, upskilling plan and target company list | Personal |
+| The candidate profile, studying-now list, skill list with its demand counts, and target company list | Personal |
 | The database, dashboard code and application history | Personal; outcomes are not a benchmark of the pipeline |
 | Gate lists: ignored companies, title blocklists, commute keywords, salary floor | Encode one person's search |
 | The chat-side skill instructions, and the resumes and analyses they produce | The instructions encode the judgment; the outputs are personal documents |
